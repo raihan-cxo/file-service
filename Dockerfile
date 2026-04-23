@@ -9,7 +9,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # ---- Copy application code ----
-COPY ./app .
+COPY . .
 
 # ---- Security: run as non-root user ----
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
