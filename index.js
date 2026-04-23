@@ -15,7 +15,7 @@ const s3 = new S3Client({ region: REGION });
 app.use("/files", async (req, res) => {
   try {
     // removes leading "/"
-    const key = req.path.slice(1);
+    const key = `files/${req.path.slice(1)}`;
 
     if (!key) {
       return res.status(400).json({ error: "Missing file path" });
@@ -29,7 +29,7 @@ app.use("/files", async (req, res) => {
     const url = await getSignedUrl(s3, command, {
       expiresIn: 300, // 5 min
     });
-
+    console.log("Fetching key:", key);
     return res.json({ url });
 
   } catch (err) {
