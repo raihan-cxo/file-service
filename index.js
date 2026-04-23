@@ -5,17 +5,17 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const app = express();
 
 // ---- CONFIG ----
-const REGION = process.env.AWS_REGION;
-const BUCKET = process.env.S3_BUCKET;
+const REGION = process.env.AWS_REGION || "ap-south-1";
+// const BUCKET = process.env.S3_BUCKET;
+const BUCKET = "clusterdev3";
 
-// IAM role preferred (no hardcoded keys)
 const s3 = new S3Client({ region: REGION });
 
-// ---- ROUTE ----
-// Example: /files/my/folder/file.jpg
-app.get("/files/*", async (req, res) => {
+// ---- FILE ROUTE (NO path-to-regexp issues) ----
+app.use("/files", async (req, res) => {
   try {
-    const key = req.params[0]; // wildcard capture
+    // removes leading "/"
+    const key = req.path.slice(1);
 
     if (!key) {
       return res.status(400).json({ error: "Missing file path" });
@@ -26,19 +26,25 @@ app.get("/files/*", async (req, res) => {
       Key: key,
     });
 
-    // expires in 5 minutes
-    const url = await getSignedUrl(s3, command, { expiresIn: 300 });
+    const url = await getSignedUrl(s3, command, {
+      expiresIn: 300, // 5 min
+    });
 
     return res.json({ url });
+
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err);
     return res.status(500).json({ error: "Failed to generate URL" });
   }
 });
 
 // ---- HEALTH ----
-app.get("/health", (_, res) => res.send("OK"));
+app.get("/health", (_, res) => {
+  res.send("OK");
+});
 
-app.listen(3000, () => {
-  console.log("File service running on port 3000");
+// ---- START ----
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
